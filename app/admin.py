@@ -107,7 +107,14 @@ def products():
             if not name or price <= 0:
                 flash("Name and price are required.", "err")
             else:
-                slug = slugify(name) or "product"
+                # Ensure the slug is unique (fix for 500 error on duplicate names)
+                base_slug = slugify(name) or "product"
+                slug = base_slug
+                counter = 1
+                while Product.query.filter_by(slug=slug).first():
+                    counter += 1
+                    slug = f"{base_slug}-{counter}"
+
                 p = Product(name=name, slug=slug, category=category, is_ig_service=is_ig,
                             description=(request.form.get("description") or "").strip(),
                             price=price,
@@ -167,9 +174,8 @@ def products():
                     db.session.delete(p)
                     db.session.commit()
                     flash("Product deleted completely.", "ok")
-                except Exception as e:
+                except Exception:
                     db.session.rollback()
-                    # If there are orders, just hide the product instead of deleting it
                     p.is_active = False
                     db.session.commit()
                     flash("Product hidden from store (it has existing orders, so it was archived).", "ok")
