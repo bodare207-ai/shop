@@ -20,7 +20,7 @@
       {% set img = imgs[0] if imgs else 'none' %}
       
       {% if img == 'default.jpg' or img == 'none' %}
-        {% set img_src = 'https://placehold.co/400x300/161d2e/93a2ba?text=' + p.name|urlencode %}
+        {% set img_src = 'https://placehold.co/400x300/161d2e/93a2ba?text=Product' %}
       {% elif img.startswith('http') %}
         {% set img_src = img %}
       {% else %}
