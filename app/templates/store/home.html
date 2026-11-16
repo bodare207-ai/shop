@@ -17,8 +17,15 @@
   {% for p in products %}
     <article class="card product-card" style="padding:0; overflow:hidden; display:flex; flex-direction:column;">
       {% set imgs = p.images|from_json %}
-      {% set img = imgs[0] if imgs else 'default.jpg' %}
-      {% set img_src = img if img.startswith('http') else url_for('store.product_image', name=img) %}
+      {% set img = imgs[0] if imgs else 'none' %}
+      
+      {% if img == 'default.jpg' or img == 'none' %}
+        {% set img_src = 'https://placehold.co/400x300/161d2e/93a2ba?text=' + p.name|urlencode %}
+      {% elif img.startswith('http') %}
+        {% set img_src = img %}
+      {% else %}
+        {% set img_src = url_for('store.product_image', name=img) %}
+      {% endif %}
       
       <img src="{{ img_src }}" alt="{{ p.name }}" style="width:100%; height:180px; object-fit:cover;">
       
