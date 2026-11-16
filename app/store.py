@@ -143,3 +143,19 @@ def support():
             
     messages = SupportMessage.query.filter_by(user_id=u.id).order_by(SupportMessage.created_at.asc()).all()
     return render_template("store/support.html", messages=messages)
+
+# --- GITHUB DEBUG ROUTE ---
+@bp.route("/test-github")
+def test_github():
+    import requests
+    token = current_app.config.get("GITHUB_TOKEN")
+    repo = current_app.config.get("GITHUB_REPO")
+    
+    if not token or not repo:
+        return f"<h1>❌ ERROR</h1><p>Token is {'MISSING' if not token else 'SET'}</p><p>Repo is {'MISSING' if not repo else repo}</p>"
+        
+    headers = {"Authorization": f"token {token}", "Accept": "application/vnd.github.v3+json"}
+    url = f"https://api.github.com/repos/{repo}"
+    res = requests.get(url, headers=headers)
+    
+    return f"<h1>GitHub Status Code: {res.status_code}</h1><pre>{res.text}</pre>"
