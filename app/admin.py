@@ -1,4 +1,4 @@
-import os, secrets, json
+import os, secrets, json, tempfile
 from datetime import datetime
 from flask import (Blueprint, render_template, request, redirect,
                    url_for, session, abort, flash, current_app)
@@ -113,23 +113,28 @@ def products():
                             price=price,
                             download_url=(request.form.get("download_url") or "").strip() or None)
                 
-                # Upload File to GitHub (so it doesn't delete on Render)
+                # 1. Upload APK File to GitHub
                 f = request.files.get("file")
                 if f and f.filename:
                     ext = os.path.splitext(f.filename)[1].lower()
                     if ext in ALLOWED_PRODUCT_EXT:
                         fname = f"{slug}-{secrets.token_hex(4)}{ext}"
-                        temp_path = os.path.join(current_app.config["FILES_FOLDER"], fname)
-                        f.save(temp_path)
+                        # Use tempfile to save to a writable directory
+                        temp_file_path = os.path.join(tempfile.gettempdir(), fname)
+                        f.save(temp_file_path)
                         
-                        success = upload_to_github(temp_path, fname)
+                        success = upload_to_github(temp_file_path, fname)
                         if success:
                             p.download_url = f"https://raw.githubusercontent.com/{current_app.config['GITHUB_REPO']}/main/uploads/{fname}"
                         else:
                             p.file_path = fname
                             flash("File saved locally (GitHub upload failed).", "err")
+                        
+                        # Clean up temp file
+                        if os.path.exists(temp_file_path):
+                            os.remove(temp_file_path)
 
-                # Upload Images to GitHub
+                # 2. Upload Images to GitHub
                 uploaded_images = request.files.getlist("images")
                 saved_images = []
                 for img in uploaded_images:
@@ -137,7 +142,8 @@ def products():
                         ext = os.path.splitext(img.filename)[1].lower()
                         if ext in ALLOWED_IMG_EXT and len(saved_images) < 4:
                             iname = f"img-{slug}-{secrets.token_hex(4)}{ext}"
-                            temp_img_path = os.path.join(current_app.config["PRODUCTS_IMG_FOLDER"], iname)
+                            # Use tempfile to save to a writable directory
+                            temp_img_path = os.path.join(tempfile.gettempdir(), iname)
                             img.save(temp_img_path)
                             
                             gh_success = upload_to_github(temp_img_path, iname)
@@ -145,7 +151,11 @@ def products():
                                 gh_url = f"https://raw.githubusercontent.com/{current_app.config['GITHUB_REPO']}/main/uploads/{iname}"
                                 saved_images.append(gh_url)
                             else:
-                                saved_images.append(iname) # Fallback to local file name
+                                saved_images.append("default.jpg")
+                                
+                            # Clean up temp file
+                            if os.path.exists(temp_img_path):
+                                os.remove(temp_img_path)
                 
                 if not saved_images: 
                     saved_images = ["default.jpg"]
