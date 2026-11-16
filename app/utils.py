@@ -64,31 +64,49 @@ def rate_limit(key, limit, window_seconds):
     return True
 
 def upload_to_github(filepath, filename):
-    # Uploads file to GitHub repo via API so files don't delete on Render Free Tier
-    token = current_app.config["GITHUB_TOKEN"]
-    repo = current_app.config["GITHUB_REPO"]
+    token = current_app.config.get("GITHUB_TOKEN", "")
+    repo = current_app.config.get("GITHUB_REPO", "")
+    
+    current_app.logger.info(f"--- START GITHUB UPLOAD: {filename} ---")
+    
     if not token or not repo:
+        current_app.logger.error("❌ FAILED: GITHUB_TOKEN or GITHUB_REPO is missing in Render Environment Variables!")
         return False
         
     with open(filepath, "rb") as f:
         content = base64.b64encode(f.read()).decode("utf-8")
         
     url = f"https://api.github.com/repos/{repo}/contents/uploads/{filename}"
-    headers = {"Authorization": f"token {token}", "Accept": "application/vnd.github.v3+json"}
+    headers = {
+        "Authorization": f"token {token}", 
+        "Accept": "application/vnd.github.v3+json",
+        "User-Agent": "Render-Flask-App"
+    }
     
-    # Check if exists to get SHA
-    res = requests.get(url, headers=headers)
-    data = {"message": f"Upload {filename}", "content": content}
-    if res.status_code == 200:
-        data["sha"] = res.json()["sha"]
+    try:
+        # Check if file exists to get SHA (needed for overwrite)
+        res = requests.get(url, headers=headers, timeout=15)
+        data = {"message": f"Upload {filename}", "content": content}
+        if res.status_code == 200:
+            data["sha"] = res.json()["sha"]
+            
+        current_app.logger.info(f"GitHub PUT Request to: {url}")
+        res = requests.put(url, headers=headers, json=data, timeout=60)
         
-    res = requests.put(url, headers=headers, json=data)
-    return res.status_code in (200, 201)
+        if res.status_code in (200, 201):
+            current_app.logger.info(f"✅ SUCCESS: Uploaded {filename} to GitHub")
+            return True
+        else:
+            current_app.logger.error(f"❌ GITHUB API REJECTED: {res.status_code} - {res.text}")
+            return False
+            
+    except Exception as e:
+        current_app.logger.error(f"❌ GITHUB EXCEPTION: {str(e)}")
+        return False
 
 def verify_screenshot(filepath, expected_amount):
     if not HAS_OCR:
         return False, "OCR not installed."
-
     try:
         img = Image.open(filepath)
         img = img.convert('L') 
