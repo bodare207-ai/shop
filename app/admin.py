@@ -122,7 +122,6 @@ def products():
                         temp_path = os.path.join(current_app.config["FILES_FOLDER"], fname)
                         f.save(temp_path)
                         
-                        # Try pushing to GitHub
                         success = upload_to_github(temp_path, fname)
                         if success:
                             p.download_url = f"https://raw.githubusercontent.com/{current_app.config['GITHUB_REPO']}/main/uploads/{fname}"
@@ -130,6 +129,7 @@ def products():
                             p.file_path = fname
                             flash("File saved locally (GitHub upload failed).", "err")
 
+                # Upload Images to GitHub
                 uploaded_images = request.files.getlist("images")
                 saved_images = []
                 for img in uploaded_images:
@@ -137,12 +137,20 @@ def products():
                         ext = os.path.splitext(img.filename)[1].lower()
                         if ext in ALLOWED_IMG_EXT and len(saved_images) < 4:
                             iname = f"img-{slug}-{secrets.token_hex(4)}{ext}"
-                            img.save(os.path.join(current_app.config["PRODUCTS_IMG_FOLDER"], iname))
-                            saved_images.append(iname)
+                            temp_img_path = os.path.join(current_app.config["PRODUCTS_IMG_FOLDER"], iname)
+                            img.save(temp_img_path)
+                            
+                            gh_success = upload_to_github(temp_img_path, iname)
+                            if gh_success:
+                                gh_url = f"https://raw.githubusercontent.com/{current_app.config['GITHUB_REPO']}/main/uploads/{iname}"
+                                saved_images.append(gh_url)
+                            else:
+                                saved_images.append(iname) # Fallback to local file name
                 
-                if not saved_images: saved_images = ["default.jpg"]
+                if not saved_images: 
+                    saved_images = ["default.jpg"]
+                
                 p.images = json.dumps(saved_images)
-                
                 db.session.add(p); db.session.commit()
                 flash("Product added successfully.", "ok")
 
@@ -163,7 +171,6 @@ def products():
 @bp.route("/support")
 @admin_required
 def support_list():
-    # Get distinct users who have messages
     users = User.query.join(SupportMessage).group_by(User.id).all()
     return render_template("admin/support_list.html", users=users)
 
