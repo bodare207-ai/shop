@@ -70,7 +70,7 @@ def upload_to_github(filepath, filename):
     current_app.logger.info(f"--- START GITHUB UPLOAD: {filename} ---")
     
     if not token or not repo:
-        current_app.logger.error("❌ FAILED: GITHUB_TOKEN or GITHUB_REPO is missing in Render Environment Variables!")
+        current_app.logger.error("❌ FAILED: GITHUB_TOKEN or GITHUB_REPO is missing!")
         return False
         
     with open(filepath, "rb") as f:
@@ -84,7 +84,6 @@ def upload_to_github(filepath, filename):
     }
     
     try:
-        # Check if file exists to get SHA (needed for overwrite)
         res = requests.get(url, headers=headers, timeout=15)
         data = {"message": f"Upload {filename}", "content": content}
         if res.status_code == 200:
@@ -97,6 +96,7 @@ def upload_to_github(filepath, filename):
             current_app.logger.info(f"✅ SUCCESS: Uploaded {filename} to GitHub")
             return True
         else:
+            # THIS WILL PRINT THE EXACT GITHUB ERROR
             current_app.logger.error(f"❌ GITHUB API REJECTED: {res.status_code} - {res.text}")
             return False
             
