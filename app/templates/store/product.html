@@ -5,13 +5,29 @@
 <div class="card" style="display:flex; gap:30px; flex-wrap:wrap;">
   
   <div style="flex:1; min-width:300px;">
-    <img id="main-image" src="{{ url_for('store.product_image', name=imgs[0]) }}" 
+    {% set main_img = imgs[0] if imgs else 'none' %}
+    {% if main_img == 'default.jpg' or main_img == 'none' %}
+      {% set main_src = 'https://placehold.co/600x400/161d2e/93a2ba?text=Product+Image' %}
+    {% elif main_img.startswith('http') %}
+      {% set main_src = main_img %}
+    {% else %}
+      {% set main_src = url_for('store.product_image', name=main_img) %}
+    {% endif %}
+    
+    <img id="main-image" src="{{ main_src }}" 
          style="width:100%; border-radius:12px; border:1px solid #26314a; object-fit:contain; background:#000; max-height:400px;">
     
     {% if imgs|length > 1 %}
     <div style="display:flex; gap:10px; margin-top:10px; overflow-x:auto;">
       {% for img in imgs %}
-        <img src="{{ url_for('store.product_image', name=img) }}" 
+        {% if img == 'default.jpg' or img == 'none' %}
+          {% set thumb_src = 'https://placehold.co/150x150/161d2e/93a2ba?text=Image' %}
+        {% elif img.startswith('http') %}
+          {% set thumb_src = img %}
+        {% else %}
+          {% set thumb_src = url_for('store.product_image', name=img) %}
+        {% endif %}
+        <img src="{{ thumb_src }}" 
              onclick="document.getElementById('main-image').src=this.src"
              style="width:70px; height:70px; object-fit:cover; border-radius:8px; cursor:pointer; border:2px solid #26314a;">
       {% endfor %}
