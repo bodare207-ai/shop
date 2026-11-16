@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+{% block title %}Customer Support — {{ SITE_NAME }}{% endblock %}
+{% block body %}
+<div class="row-head">
+  <h1>Customer Support</h1>
+  <a class="back" href="{{ url_for('store.home') }}">← Store</a>
+</div>
+
+<div class="card" style="height: 500px; display:flex; flex-direction:column;">
+  <div style="flex:1; overflow-y:auto; padding-bottom:20px;">
+    {% for m in messages %}
+      <div style="margin-bottom:15px; text-align: {{ 'right' if not m.is_admin else 'left' }};">
+        <div style="display:inline-block; padding:10px 15px; border-radius:10px; max-width:80%; background:{{ '#2563eb' if not m.is_admin else '#26314a' }}; color:#fff;">
+          <span style="font-size:11px; color:#ccc; display:block; margin-bottom:5px;">{{ 'You' if not m.is_admin else 'Admin' }} • {{ m.created_at.strftime('%d %b, %H:%M') }}</span>
+          {{ m.message }}
+        </div>
+      </div>
+    {% else %}
+      <p class="muted" style="text-align:center; margin-top:50px;">No messages yet. Start the conversation below!</p>
+    {% endfor %}
+  </div>
+  
+  <form method="post" style="display:flex; gap:10px; margin-top:20px; border-top:1px solid #26314a; padding-top:20px;">
+    <input type="hidden" name="csrf" value="{{ csrf_token() }}">
+    <input name="message" placeholder="Type your message here..." required style="flex:1; margin:0;">
+    <button class="btn">Send</button>
+  </form>
+</div>
+{% endblock %}

@@ -1,0 +1,9 @@
+__pycache__/
+*.pyc
+instance/
+uploads/
+files/
+.env
+.venv/
+app/static/qr.png
+app/static/products/

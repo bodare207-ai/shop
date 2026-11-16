@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+{% block title %}Support Inbox{% endblock %}
+{% block body %}
+<div class="row-head">
+  <h1>Support Inbox</h1>
+  <a class="back" href="{{ url_for('admin.dashboard') }}">← Dashboard</a>
+</div>
+
+<div class="grid">
+  {% for u in users %}
+    <div class="card" style="display:flex; align-items:center; gap:15px;">
+      <div style="width:50px; height:50px; border-radius:50%; background:#2563eb; display:flex; align-items:center; justify-content:center; font-weight:bold; font-size:20px;">
+        {{ u.name[0]|upper }}
+      </div>
+      <div>
+        <strong>{{ u.name }}</strong>
+        <div class="muted small">{{ u.email }}</div>
+        <a class="btn small" style="margin-top:10px;" href="{{ url_for('admin.support_chat', uid=u.id) }}">Open Chat</a>
+      </div>
+    </div>
+  {% else %}
+    <p class="muted">No support messages yet.</p>
+  {% endfor %}
+</div>
+{% endblock %}

@@ -1,0 +1,19 @@
+services:
+  - type: web
+    name: viraj-store
+    runtime: docker
+    envVars:
+      - key: SECRET_KEY
+        generateValue: true
+      - key: UPI_ID
+        value: 9579059838@fam
+      - key: UPI_NAME
+        value: Viraj
+      - key: SITE_NAME
+        value: Viraj Store
+      - key: GITHUB_TOKEN
+        sync: false
+      - key: GITHUB_REPO
+        value: bodare207-ai/shop
+      - key: DATABASE_URL
+        sync: false

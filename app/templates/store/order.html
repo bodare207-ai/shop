@@ -1,0 +1,78 @@
+{% extends "base.html" %}
+{% block title %}Order {{ order.order_code }} — {{ SITE_NAME }}{% endblock %}
+{% block body %}
+<a class="back" href="{{ url_for('store.home') }}">← Store</a>
+
+{% if order.status == 'pending' and order.screenshot_path %}
+  <meta http-equiv="refresh" content="20">
+{% endif %}
+
+<div class="card">
+  <h1>Order {{ order.order_code }}</h1>
+  <p><strong>{{ order.product.name }}</strong> {% if order.quantity > 1 %}(x{{ order.quantity }}){% endif %} — <span class="price">₹{{ "%.2f"|format(order.amount) }}</span></p>
+  <p>Status:
+    {% if order.status == 'pending' %}<span class="badge warn">Awaiting verification</span>
+    {% elif order.status == 'approved' %}<span class="badge ok">Approved</span>
+    {% else %}<span class="badge bad">Rejected</span>{% endif %}
+  </p>
+</div>
+
+{% if order.status == 'approved' %}
+  <div class="card" style="text-align:center;">
+    <h2>🎉 Payment Verified!</h2>
+    {% if order.product.is_ig_service %}
+      <p>Your IG service is being processed. Contact support for updates.</p>
+    {% else %}
+      <p>Your download is ready.</p>
+    {% endif %}
+    <a class="btn" style="margin-top:15px;" href="{{ url_for('store.my_downloads') }}">Go to My Downloads</a>
+  </div>
+
+{% elif order.status == 'rejected' %}
+  <div class="card">
+    <h2>Payment not verified</h2>
+    <p>Re-upload a clearer screenshot below.</p>
+    {% if err %}<p class="err">{{ err }}</p>{% endif %}
+    <form method="post" enctype="multipart/form-data" class="form">
+      <input type="hidden" name="csrf" value="{{ csrf_token() }}">
+      <label>New screenshot <input type="file" name="screenshot" accept="image/*" required></label>
+      <button class="btn">Re-upload</button>
+    </form>
+  </div>
+
+{% elif order.screenshot_path %}
+  <div class="card" style="text-align:center;">
+    <h2>⏳ Verification in progress</h2>
+    <p style="color:#fbbf24; font-weight:bold; margin:15px 0;">Your payment will be verified in under 24 hours.</p>
+    <p class="muted">Please return to this page in 24 hours to check your status.</p>
+    <img class="shot" style="margin:20px auto;" src="{{ url_for('store.upload_file', name=order.screenshot_path) }}">
+  </div>
+
+{% else %}
+  <div class="card paybox">
+    <h2>1. Pay ₹{{ "%.2f"|format(order.amount) }}</h2>
+    
+    <img src="{{ url_for('static', filename='qr.png') }}" alt="UPI QR Code" style="width: 220px; height: 220px; border-radius: 10px; margin: 15px auto; background: white; padding: 10px; display:block;">
+    
+    <p>UPI ID: <code id="upiid">{{ config.UPI_ID }}</code>
+       <button type="button" class="btn small" onclick="copyUpi()">Copy</button></p>
+    <p class="muted small">Add the note <strong>{{ order.order_code }}</strong> to your payment.</p>
+    
+    <h2 style="margin-top:26px; border-top:1px solid #26314a; padding-top:20px;">2. Upload screenshot</h2>
+    <p class="muted small" style="margin-bottom:15px;">Our AI will instantly read the image and verify your payment.</p>
+    
+    <form method="post" enctype="multipart/form-data" class="form" style="max-width:400px; margin:15px auto;">
+      <input type="hidden" name="csrf" value="{{ csrf_token() }}">
+      <input type="file" name="screenshot" accept="image/*" required style="padding:15px; border:2px dashed #2563eb; background:transparent;">
+      <button class="btn" style="padding:15px;">Submit Payment Proof</button>
+    </form>
+  </div>
+
+  <script>
+    function copyUpi() {
+      var id = document.getElementById('upiid').textContent;
+      navigator.clipboard.writeText(id).then(function(){ alert('UPI ID copied!'); });
+    }
+  </script>
+{% endif %}
+{% endblock %}

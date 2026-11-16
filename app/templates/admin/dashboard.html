@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+{% block title %}Admin Dashboard{% endblock %}
+{% block body %}
+<div class="row-head">
+  <h1>Dashboard</h1>
+  <a class="back" href="{{ url_for('admin.logout') }}">Logout</a>
+</div>
+
+<div class="stats">
+  <div class="stat"><span class="stat-num">{{ stats.pending }}</span><span>Pending Orders</span></div>
+  <div class="stat ok"><span class="stat-num">{{ stats.approved }}</span><span>Approved</span></div>
+  <div class="stat"><span class="stat-num">₹{{ "%.2f"|format(stats.revenue) }}</span><span>Total Revenue</span></div>
+</div>
+
+<p style="display:flex;gap:10px; margin:20px 0">
+  <a class="btn" href="{{ url_for('admin.orders', f='pending') }}">Review Pending</a>
+  <a class="btn alt" href="{{ url_for('admin.products') }}">Manage Products</a>
+  <a class="btn alt" href="{{ url_for('admin.support_list') }}" style="background:#8b5cf6;">Support Chats</a>
+</p>
+
+<h2>Latest Pending Orders</h2>
+{% for o in pending %}
+  <div class="card">
+    <strong>{{ o.order_code }}</strong> — {{ o.product.name }} · ₹{{ "%.2f"|format(o.amount) }}
+    <div class="muted small">{{ o.user.name }} ({{ o.user.email }}) · {{ o.created_at.strftime('%d %b %H:%M') }}</div>
+    <p><a class="btn small" href="{{ url_for('admin.orders', f='pending') }}">Review</a></p>
+  </div>
+{% else %}
+  <p class="muted">Nothing pending 🎉</p>
+{% endfor %}
+{% endblock %}

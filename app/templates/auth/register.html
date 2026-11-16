@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+{% block title %}Register — {{ SITE_NAME }}{% endblock %}
+{% block body %}
+<div class="card form" style="max-width:400px; margin: 40px auto;">
+  <h1>Create Account</h1>
+  <p class="muted">Sign up to buy and download apps.</p>
+  <form method="post">
+    <input type="hidden" name="csrf" value="{{ csrf_token() }}">
+    <label>Full Name <input name="name" required></label>
+    <label>Email <input type="email" name="email" required></label>
+    <label>Password (6+ chars) <input type="password" name="password" required minlength="6"></label>
+    <button class="btn" style="margin-top:10px;">Create Account</button>
+  </form>
+  <p class="muted small" style="text-align:center; margin-top:15px;">
+    Already have an account? <a href="{{ url_for('auth.login') }}">Login here</a>.
+  </p>
+</div>
+{% endblock %}

@@ -1,0 +1,10 @@
+{% extends "base.html" %}
+{% block title %}Downloading...{% endblock %}
+{% block body %}
+<div class="card" style="text-align:center; padding:50px;">
+  <h1>⬇️ Downloading {{ order.product.name }}</h1>
+  <p class="muted">If your download does not start automatically, click below.</p>
+  <br>
+  <a class="btn" href="{{ url }}" target="_blank" rel="noopener" style="font-size:18px; padding:15px 40px;">Click Here to Download</a>
+</div>
+{% endblock %}

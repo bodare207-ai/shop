@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+{% block title %}{{ product.name }} — {{ SITE_NAME }}{% endblock %}
+{% block body %}
+<a class="back" href="{{ url_for('store.home') }}">← Back to store</a>
+<div class="card" style="display:flex; gap:30px; flex-wrap:wrap;">
+  
+  <div style="flex:1; min-width:300px;">
+    <img id="main-image" src="{{ url_for('store.product_image', name=imgs[0]) }}" 
+         style="width:100%; border-radius:12px; border:1px solid #26314a; object-fit:contain; background:#000; max-height:400px;">
+    
+    {% if imgs|length > 1 %}
+    <div style="display:flex; gap:10px; margin-top:10px; overflow-x:auto;">
+      {% for img in imgs %}
+        <img src="{{ url_for('store.product_image', name=img) }}" 
+             onclick="document.getElementById('main-image').src=this.src"
+             style="width:70px; height:70px; object-fit:cover; border-radius:8px; cursor:pointer; border:2px solid #26314a;">
+      {% endfor %}
+    </div>
+    {% endif %}
+  </div>
+
+  <div style="flex:1; min-width:300px; display:flex; flex-direction:column; justify-content:center;">
+    <h1>{{ product.name }}</h1>
+    <p class="muted" style="font-size:16px;">{{ product.description }}</p>
+    
+    {% if product.is_ig_service %}
+      <p class="price" style="font-size:32px; margin:20px 0;">₹{{ "%.2f"|format(product.price) }} <span style="font-size:16px; color:#93a2ba;">/ unit</span></p>
+      <form method="post" action="{{ url_for('store.checkout') }}">
+        <input type="hidden" name="csrf" value="{{ csrf_token() }}">
+        <input type="hidden" name="product_id" value="{{ product.id }}">
+        <label style="margin-bottom:15px;">Quantity (e.g. 1000) 
+          <input type="number" name="quantity" min="1" value="100" required style="font-size:18px; padding:12px;">
+        </label>
+        <button class="btn" style="width:100%; font-size:18px; padding:15px;">Buy Now</button>
+      </form>
+    {% else %}
+      <p class="price" style="font-size:32px; margin:20px 0;">₹{{ "%.2f"|format(product.price) }}</p>
+      {% if already_bought %}
+        <div style="background:#052e16; border:1px solid #14532d; padding:15px; border-radius:8px;">
+          <h3 style="color:#4ade80; margin:0 0 10px 0;">✅ You already own this</h3>
+          <a class="btn" style="width:100%; text-align:center; box-sizing:border-box;" href="{{ url_for('store.my_downloads') }}">Go to My Downloads</a>
+        </div>
+      {% else %}
+        <form method="post" action="{{ url_for('store.checkout') }}">
+          <input type="hidden" name="csrf" value="{{ csrf_token() }}">
+          <input type="hidden" name="product_id" value="{{ product.id }}">
+          <button class="btn" style="width:100%; font-size:18px; padding:15px;">Buy Now</button>
+        </form>
+      {% endif %}
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

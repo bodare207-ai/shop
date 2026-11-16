@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+{% block title %}Manage Orders{% endblock %}
+{% block body %}
+<div class="row-head">
+  <h1>Orders</h1>
+  <a class="back" href="{{ url_for('admin.dashboard') }}">← Dashboard</a>
+</div>
+
+<div class="tabs">
+  {% for k, v in [('pending','Pending'),('approved','Approved'),('rejected','Rejected'),('all','All')] %}
+    <a class="tab {% if f == k %}active{% endif %}" href="{{ url_for('admin.orders', f=k) }}">{{ v }}</a>
+  {% endfor %}
+</div>
+
+{% for o in orders %}
+<div class="card">
+  <div class="order-head">
+    <div>
+      <strong>{{ o.order_code }}</strong> — {{ o.product.name }} {% if o.quantity > 1 %}(x{{ o.quantity }}){% endif %} · ₹{{ "%.2f"|format(o.amount) }}
+      <div class="muted small">{{ o.user.name }} · {{ o.user.email }} · {{ o.created_at.strftime('%d %b %Y %H:%M') }}</div>
+    </div>
+    <span class="badge {{ 'ok' if o.status == 'approved' else ('bad' if o.status == 'rejected' else 'warn') }}">{{ o.status }}</span>
+  </div>
+
+  {% if o.screenshot_path %}
+    <a href="{{ url_for('store.upload_file', name=o.screenshot_path) }}" target="_blank">
+      <img class="shot" src="{{ url_for('store.upload_file', name=o.screenshot_path) }}">
+    </a>
+    {% if o.ocr_text %}
+      <div style="background:#0f1420; padding:10px; border-radius:8px; margin-top:10px; border:1px solid #26314a;">
+        <p class="muted small" style="margin:0 0 5px 0;">AI Read:</p>
+        <code style="font-size:11px; color:#93a2ba;">{{ o.ocr_text[:300] }}...</code>
+      </div>
+    {% endif %}
+  {% else %}
+    <p class="muted small">No screenshot uploaded.</p>
+  {% endif %}
+
+  <form method="post" action="{{ url_for('admin.verify', oid=o.id) }}" class="form row" style="margin-top:15px;">
+    <input type="hidden" name="csrf" value="{{ csrf_token() }}">
+    <input type="hidden" name="f" value="{{ f }}">
+    <input name="note" placeholder="Optional note to buyer" value="{{ o.admin_note or '' }}" maxlength="255" style="flex:1;">
+    <button class="btn ok" name="do" value="approved">Approve</button>
+    <button class="btn bad" name="do" value="rejected">Reject</button>
+  </form>
+</div>
+{% else %}
+<p class="muted">No orders in this list.</p>
+{% endfor %}
+{% endblock %}
