@@ -119,7 +119,6 @@ def products():
                     ext = os.path.splitext(f.filename)[1].lower()
                     if ext in ALLOWED_PRODUCT_EXT:
                         fname = f"{slug}-{secrets.token_hex(4)}{ext}"
-                        # Use tempfile to save to a writable directory
                         temp_file_path = os.path.join(tempfile.gettempdir(), fname)
                         f.save(temp_file_path)
                         
@@ -130,7 +129,6 @@ def products():
                             p.file_path = fname
                             flash("File saved locally (GitHub upload failed).", "err")
                         
-                        # Clean up temp file
                         if os.path.exists(temp_file_path):
                             os.remove(temp_file_path)
 
@@ -142,7 +140,6 @@ def products():
                         ext = os.path.splitext(img.filename)[1].lower()
                         if ext in ALLOWED_IMG_EXT and len(saved_images) < 4:
                             iname = f"img-{slug}-{secrets.token_hex(4)}{ext}"
-                            # Use tempfile to save to a writable directory
                             temp_img_path = os.path.join(tempfile.gettempdir(), iname)
                             img.save(temp_img_path)
                             
@@ -153,7 +150,6 @@ def products():
                             else:
                                 saved_images.append("default.jpg")
                                 
-                            # Clean up temp file
                             if os.path.exists(temp_img_path):
                                 os.remove(temp_img_path)
                 
@@ -167,8 +163,17 @@ def products():
         elif action == "delete":
             p = db.session.get(Product, request.form.get("id", type=int))
             if p:
-                db.session.delete(p); db.session.commit()
-                flash("Product deleted.", "ok")
+                try:
+                    db.session.delete(p)
+                    db.session.commit()
+                    flash("Product deleted completely.", "ok")
+                except Exception as e:
+                    db.session.rollback()
+                    # If there are orders, just hide the product instead of deleting it
+                    p.is_active = False
+                    db.session.commit()
+                    flash("Product hidden from store (it has existing orders, so it was archived).", "ok")
+                    
         return redirect(url_for("admin.products"))
 
     products = Product.query.all()
