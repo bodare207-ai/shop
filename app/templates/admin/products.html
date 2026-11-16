@@ -9,7 +9,10 @@
 <div class="grid">
 {% for p in products %}
   <div class="card">
-    <img src="{{ url_for('store.product_image', name=p.img_list[0]) }}" 
+    {% set img = p.img_list[0] if p.img_list else 'default.jpg' %}
+    {% set img_src = img if img.startswith('http') else url_for('store.product_image', name=img) %}
+    
+    <img src="{{ img_src }}" 
          style="width:100%; height:120px; object-fit:cover; border-radius:8px; margin-bottom:10px;">
     <span class="badge warn" style="margin-bottom:5px;">{{ p.category }}</span>
     <strong>{{ p.name }}</strong> · ₹{{ "%.2f"|format(p.price) }} {% if p.is_ig_service %}/ unit{% endif %}
